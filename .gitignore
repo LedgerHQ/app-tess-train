@@ -8,6 +8,9 @@ debug/
 # Temporary directory with snapshots taken during test runs
 tests/snapshots-tmp/
 
+# Golden test snapshots directory, not needed in this repo
+tests/snapshots/
+
 # Unit tests and code coverage
 unit-tests/build/
 unit-tests/coverage/
@@ -30,3 +33,9 @@ doc/latex
 
 # Virtual env for sideload (macOS and Windows)
 ledger/
+
+# Training data directory
+data/
+
+# Virtual env for training
+tessvenv/
