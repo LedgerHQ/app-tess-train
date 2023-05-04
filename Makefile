@@ -16,8 +16,46 @@
 # ****************************************************************************
 
 ifeq ($(BOLOS_SDK),)
-$(error Environment variable BOLOS_SDK is not set)
-endif
+
+$(info Environment variable BOLOS_SDK is not set)
+
+SHELL := /bin/bash
+.ONESHELL:
+
+.PHONY: requirements
+requirements:
+	@echo "Create python virtual and install requirements" 
+	python3 -m venv tessvenv
+	source tessvenv/bin/activate
+	pip3 install --upgrade pip
+	pip3 install --extra-index-url https://test.pypi.org/simple/ -r tests/requirements.txt
+
+.PHONY: snapshots
+snapshots: requirements
+	source tessvenv/bin/activate
+	@echo "Launching ragger test to generate training snapshots"
+	python3 -m pytest --device nanox -k "test_get_snapshots" --golden_run
+
+.PHONY: ground-truth
+ground-truth: snapshots
+	source tessvenv/bin/activate
+	@echo "Launching split.sh script to generate ground truth..."
+	./split.sh
+
+.PHONY: download-eng-model
+download-eng-model:
+	mkdir -p ./data/model
+	wget -O ./data/model/eng.traineddata https://github.com/tesseract-ocr/tessdata_best/raw/main/eng.traineddata
+
+.PHONY: prepare data
+prepare-data: download-eng-model ground-truth
+	$(MAKE) -C tesstrain tesseract-langdata DATA_DIR=../data
+
+.PHONY: train-nanox-ocr
+train-nanox-ocr:
+	$(MAKE) -C tesstrain training DATA_DIR=../data MODEL_NAME=nanox-font-ocr START_MODEL=eng TESSDATA=data/model MAX_ITERATIONS=5000
+
+else
 
 include $(BOLOS_SDK)/Makefile.defines
 
@@ -57,14 +95,8 @@ ENABLE_NBGL_KEYPAD   = 0
 
 APP_SOURCE_PATH += src
 
-#CUSTOM_APP_FLAGS = 0x000 # Set custom flags here, see appflags.h in SDK for flags definition
-#DISABLE_STANDARD_APP_FILES = 1 
-#DISABLE_DEFAULT_IO_SEPROXY_BUFFER_SIZE = 1 # To allow custom size declaration
-
-#DISABLE_STANDARD_APP_DEFINES = 1 # Will set all the following disablers
-#DISABLE_STANDARD_SNPRINTF = 1
-#DISABLE_STANDARD_USB = 1
-#DISABLE_STANDARD_WEBUSB = 1
-#DISABLE_STANDARD_BAGL_UX_FLOW = 1
-
 include $(BOLOS_SDK)/Makefile.standard_app
+
+endif
+
+
