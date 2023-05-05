@@ -4,7 +4,10 @@ from process_snapshots import process_snapshots
 
 ROOT_SCREENSHOT_PATH = Path(__file__).parent.resolve()
 
-def test_get_training_snapshots(firmware, navigator, test_name):
+def test_get_training_snapshots(request, firmware, navigator, test_name):
+    # In your test function, use the request fixture to access the value of the option
+    processed_path = request.config.getoption("--processed-snapshots-dir")
+
     # Navigate in the main menu
     devices = ["nanox","nanosp"]
     if firmware.device in devices:
@@ -24,6 +27,5 @@ def test_get_training_snapshots(firmware, navigator, test_name):
                                             screen_change_after_last_instruction=False)
     
     # Process generated snapshots for tesseract training
-    snapshots_path = ROOT_SCREENSHOT_PATH / "snapshots" / firmware.device / test_name
-    processed_path = ROOT_SCREENSHOT_PATH / ".." / "data" / "nanox-font-ocr-ground-truth"
+    snapshots_path = ROOT_SCREENSHOT_PATH / "snapshots-tmp" / firmware.device / test_name
     process_snapshots(snapshots_path, processed_path)

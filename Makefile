@@ -19,10 +19,14 @@ ifeq ($(BOLOS_SDK),)
 
 $(info Environment variable BOLOS_SDK is not set)
 
+NANO_MODEL_NAME=nano-font-ocr
+TRAINING_DATA_DIR=data
+TRAINING_ITERATIONS=7000
+
 SHELL := /bin/bash
 .ONESHELL:
 
-.PHONY: requirements
+.PHONY: requirements snapshots ground-truth download-eng-model prepare-data copy-corrected-groundtruth-text train-nano-ocr
 requirements:
 	@echo "Create python virtual and install requirements" 
 	python3 -m venv tessvenv
@@ -30,30 +34,37 @@ requirements:
 	pip3 install --upgrade pip
 	pip3 install --extra-index-url https://test.pypi.org/simple/ -r tests/requirements.txt
 
-.PHONY: snapshots
 snapshots: requirements
-	source tessvenv/bin/activate
 	@echo "Launching ragger test to generate training snapshots"
-	python3 -m pytest --device nanox -k "test_get_snapshots" --golden_run
-
-.PHONY: ground-truth
-ground-truth: snapshots
 	source tessvenv/bin/activate
+	python3 -m pytest --device nanox -k "test_get_snapshots" --golden_run --processed-snapshots-dir $(TRAINING_DATA_DIR)/$(NANO_MODEL_NAME)-ground-truth
+
+ground-truth: snapshots
 	@echo "Launching split.sh script to generate ground truth..."
-	./split.sh
+	source tessvenv/bin/activate
+	./split.sh $(TRAINING_DATA_DIR)/$(NANO_MODEL_NAME)-ground-truth/
 
-.PHONY: download-eng-model
 download-eng-model:
-	mkdir -p ./data/model
-	wget -O ./data/model/eng.traineddata https://github.com/tesseract-ocr/tessdata_best/raw/main/eng.traineddata
+	mkdir -p ./$(TRAINING_DATA_DIR)/model
+	wget -O ./$(TRAINING_DATA_DIR)/model/eng.traineddata https://github.com/tesseract-ocr/tessdata_best/raw/main/eng.traineddata
 
-.PHONY: prepare data
 prepare-data: download-eng-model ground-truth
-	$(MAKE) -C tesstrain tesseract-langdata DATA_DIR=../data
+	$(MAKE) -C tesstrain tesseract-langdata DATA_DIR=../$(TRAINING_DATA_DIR)
 
-.PHONY: train-nanox-ocr
-train-nanox-ocr:
-	$(MAKE) -C tesstrain training DATA_DIR=../data MODEL_NAME=nanox-font-ocr START_MODEL=eng TESSDATA=data/model MAX_ITERATIONS=5000
+copy-corrected-groundtruth-text:
+	if [ ! -d "$(TRAINING_DATA_DIR)/$(NANO_MODEL_NAME)-ground-truth" ]; \
+	then \
+		$(MAKE) prepare-data ; \
+	fi
+	rm -f $(TRAINING_DATA_DIR)/$(NANO_MODEL_NAME)-ground-truth/*.gt.txt
+	if [ ! -d "corrected-ground-truth" ]; \
+	then \
+		mkdir corrected-ground-truth && tar -xzf corrected-ground-truth-text.tar.gz -C corrected-ground-truth; \
+	fi
+	cp corrected-ground-truth/*.gt.txt $(TRAINING_DATA_DIR)/$(NANO_MODEL_NAME)-ground-truth
+
+train-nano-ocr:
+	$(MAKE) -C tesstrain training DATA_DIR=../$(TRAINING_DATA_DIR) MODEL_NAME=$(NANO_MODEL_NAME) START_MODEL=eng TESSDATA=../$(TRAINING_DATA_DIR)/model MAX_ITERATIONS=$(TRAINING_ITERATIONS)
 
 else
 
