@@ -2,7 +2,9 @@
 
 Fork of the boilerplate app used to train the tesseract model for OCR on Nano S Plus and Nano X devices screens.
 
-## Quick start guide
+The goal is not to train Tesseract from scratch but use Nano X (or Nano S Plus) screenshots to fine tune the english model in order to better perform OCR on these screens.
+
+## Training the model
 
 ```shell
 #Install tesseract
@@ -22,19 +24,38 @@ make prepare-data
 
 Now comes the painful step.
 
-For every text line `.tif` image in the ground truth directory (`data/nanox-font-ocr-ground-truth`) you need to **check** the detected text and **manually fix** any error that the untrained Tesseract model has made in the associated `.gt.txt` file.
+For every text line `.tif` image in the ground truth directory (`data/nano-font-ocr-ground-truth`) the detected text in every corresponding `.gt.txt` needs to be **checked** and **manually fixed** so that the it is error free when launching the training process.
 
-For instance, take this text line image (let's say it's called `data/nanox-font-ocr-ground-truth/00006_processed-002.exp0.tif`)
+For instance, take this text line image (let's say it's called `data/nano-font-ocr-ground-truth/00006_processed-002.exp0.tif`)
 
 ![example ground truth image](example.png)
 
-You have to fix every error in the ground truth text file (that would be `data/nanox-font-ocr-ground-truth/00006_processed-002.exp0.gt.txt`)
+Every error has to be fixed in the ground truth text file (that would be `data/nano-font-ocr-ground-truth/00006_processed-002.exp0.gt.txt`)
 
-So turn this : **ECwZarBglaKjR]¥s6G** into the correct string displayed which in this case is **ECwZarBglaKjRJYs6G**
+If the content of the `.gt.txt` is **ECwZar8gIaKjR]¥s6G**, it has to be changed so it matches the string of the `.tif`, which in this case is **ECwZarBglaKjRJYs6G**.
+### Less painful way
 
-Once you have done this for all ground truth images, you can train Tesseract by running :
+You can use the provided ground truth text that has been prepared in `corrected-ground-truth-text.tar`.
+
+It should be error free if there are no significant changes in the way strings are displayed on the device's screen compared to when this data was prepared.
+
+```shell
+# Copy provided ground truth text
+make copy-corrected-groundtruth-text
+```
+
+If there are no mistakes in the `.gt.txt` files corresponding to the `.tif` training images. You can launch the training :
 
 ```shell
 # Run training
-make train-nanox-ocr
+make train-nano-ocr
+```
+
+### Most painful way
+
+If the provided corrected groundtruth text is not matching the generated `.tif` images (for instance if the app screens have significantly changed because of modifications in the SDK or the device OS), you have to manually fix every corresponding `.gt.txt`. Then you can launch the training :
+
+```shell
+# Run training
+make train-nano-ocr
 ```

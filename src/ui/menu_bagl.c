@@ -86,6 +86,12 @@ UX_STEP_NOCB(ux_display_string_step_8,
                  .title = "lazy",
                  .text = "x6yX9lB1vRzKjZ0FwHJcUoMTGia8umgWAbE7VQnsPf2IpLh3eN5DStO4CqYkE7h6mWdXfz9ksUyvr34L2Gc1j5wQat0JPZgN8u",
              });
+UX_STEP_NOCB(ux_display_string_step_9,
+             bnnn_paging,
+             {
+                 .title = "dwarf",
+                 .text = "9P~xG(TDOXvj9P+40rW=f@C$c|t3-^ll6VAYLLxM(!;Q)eeD#>6qQc,I2M\"/}TN#E>cOlC+>L/KvpfNlGO3_/=UJ294HU5vGNzQnmu2GoSGt>@a%%$o^3!Yh&c`BWbR5=M,ZRwCZhv/!ReM^&r??XbZY^/",
+             });
 
 // "Pack my box with five dozen liquor jugs."
 // "The five boxing wizards jump quickly."
@@ -112,6 +118,7 @@ UX_FLOW(ux_menu_main_flow,
         &ux_display_string_step_6,
         &ux_display_string_step_7,
         &ux_display_string_step_8,
+        &ux_display_string_step_9,
         &ux_menu_exit_step);
 
 void ui_menu_main() {

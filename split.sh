@@ -1,5 +1,11 @@
 #!/bin/bash
-SOURCE="./data/nanox-font-ocr-ground-truth/"
+SOURCE=$1
+# You can also use conditional statements to check if the argument was provided
+if [ -z "$SOURCE" ]
+then
+    SOURCE="./data/nano-font-ocr-ground-truth/"
+fi
+
 lang=eng
 set -- "$SOURCE"*.png
 for img_file; do
