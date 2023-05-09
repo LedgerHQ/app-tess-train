@@ -15,9 +15,9 @@
 #   limitations under the License.
 # ****************************************************************************
 
-ifeq ($(BOLOS_SDK),)
-
-$(info Environment variable BOLOS_SDK is not set)
+# ----------------------------------------------------------------------------
+# TESSERACT TRAINING TARGETS
+# ----------------------------------------------------------------------------
 
 NANO_MODEL_NAME=nano-font-ocr
 TRAINING_DATA_DIR=data
@@ -26,7 +26,7 @@ TRAINING_ITERATIONS=7000
 SHELL := /bin/bash
 .ONESHELL:
 
-.PHONY: requirements snapshots ground-truth download-eng-model prepare-data copy-corrected-groundtruth-text train-nano-ocr
+.PHONY: requirements snapshots generate-ground-truth download-tess-data prepare-data copy-corrected-groundtruth-text train-nano-ocr remove-existing-data
 requirements:
 	@echo "Create python virtual and install requirements" 
 	python3 -m venv tessvenv
@@ -39,33 +39,31 @@ snapshots: requirements
 	source tessvenv/bin/activate
 	python3 -m pytest --device nanox -k "test_get_snapshots" --golden_run --processed-snapshots-dir $(TRAINING_DATA_DIR)/$(NANO_MODEL_NAME)-ground-truth
 
-ground-truth: snapshots
+remove-existing-data:
+	rm -rf
+
+download-tess-data:
+	$(MAKE) -C tesstrain tesseract-langdata DATA_DIR=../$(TRAINING_DATA_DIR)
+	mkdir -p ./$(TRAINING_DATA_DIR)/model
+	wget -O ./$(TRAINING_DATA_DIR)/model/eng.traineddata https://github.com/tesseract-ocr/tessdata_best/raw/main/eng.traineddata
+
+generate-ground-truth: snapshots
 	@echo "Launching split.sh script to generate ground truth..."
 	source tessvenv/bin/activate
 	./split.sh $(TRAINING_DATA_DIR)/$(NANO_MODEL_NAME)-ground-truth/
 
-download-eng-model:
-	mkdir -p ./$(TRAINING_DATA_DIR)/model
-	wget -O ./$(TRAINING_DATA_DIR)/model/eng.traineddata https://github.com/tesseract-ocr/tessdata_best/raw/main/eng.traineddata
-
-prepare-data: download-eng-model ground-truth
-	$(MAKE) -C tesstrain tesseract-langdata DATA_DIR=../$(TRAINING_DATA_DIR)
-
 copy-corrected-groundtruth-text:
-	if [ ! -d "$(TRAINING_DATA_DIR)/$(NANO_MODEL_NAME)-ground-truth" ]; \
-	then \
-		$(MAKE) prepare-data ; \
-	fi
-	rm -f $(TRAINING_DATA_DIR)/$(NANO_MODEL_NAME)-ground-truth/*.gt.txt
-	if [ ! -d "corrected-ground-truth" ]; \
-	then \
-		mkdir corrected-ground-truth && tar -xzf corrected-ground-truth-text.tar.gz -C corrected-ground-truth; \
-	fi
-	cp corrected-ground-truth/*.gt.txt $(TRAINING_DATA_DIR)/$(NANO_MODEL_NAME)-ground-truth
+	mkdir -p $(TRAINING_DATA_DIR)/$(NANO_MODEL_NAME)-ground-truth && cp corrected-ground-truth/*.gt.txt $(TRAINING_DATA_DIR)/$(NANO_MODEL_NAME)-ground-truth
+
+prepare-data: remove-existing-data download-tess-data generate-ground-truth copy-corrected-groundtruth-text
 
 train-nano-ocr:
 	$(MAKE) -C tesstrain training DATA_DIR=../$(TRAINING_DATA_DIR) MODEL_NAME=$(NANO_MODEL_NAME) START_MODEL=eng TESSDATA=../$(TRAINING_DATA_DIR)/model MAX_ITERATIONS=$(TRAINING_ITERATIONS)
 
+# ----------------------------------------------------------------------------
+
+ifeq ($(BOLOS_SDK),)
+$(info Environment variable BOLOS_SDK is not set)
 else
 
 include $(BOLOS_SDK)/Makefile.defines
@@ -109,5 +107,3 @@ APP_SOURCE_PATH += src
 include $(BOLOS_SDK)/Makefile.standard_app
 
 endif
-
-
