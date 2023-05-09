@@ -35,7 +35,8 @@ doc/latex
 ledger/
 
 # Training data directory
-data/
+data/langdata/
+data/model/
 
 # Virtual env for training
 tessvenv/
