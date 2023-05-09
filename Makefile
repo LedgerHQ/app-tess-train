@@ -15,6 +15,9 @@
 #   limitations under the License.
 # ****************************************************************************
 
+ifeq ($(BOLOS_SDK),)
+$(info Environment variable BOLOS_SDK is not set)
+
 # ----------------------------------------------------------------------------
 # TESSERACT TRAINING TARGETS
 # ----------------------------------------------------------------------------
@@ -40,7 +43,7 @@ snapshots: requirements
 	python3 -m pytest --device nanox -k "test_get_snapshots" --golden_run --processed-snapshots-dir $(TRAINING_DATA_DIR)/$(NANO_MODEL_NAME)-ground-truth
 
 remove-existing-data:
-	rm -rf
+	rm -rf $(TRAINING_DATA_DIR)
 
 download-tess-data:
 	$(MAKE) -C tesstrain tesseract-langdata DATA_DIR=../$(TRAINING_DATA_DIR)
@@ -62,8 +65,6 @@ train-nano-ocr:
 
 # ----------------------------------------------------------------------------
 
-ifeq ($(BOLOS_SDK),)
-$(info Environment variable BOLOS_SDK is not set)
 else
 
 include $(BOLOS_SDK)/Makefile.defines
