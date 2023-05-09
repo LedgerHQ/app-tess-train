@@ -102,8 +102,6 @@ UX_STEP_NOCB(ux_display_string_step_9,
 // "The jay, pig, fox, zebra and my wolves quack."
 // "Waltz, nymph, for quick jigs vex Bud."
 
-
-
 // FLOW for the main menu:
 UX_FLOW(ux_menu_main_flow,
         &ux_menu_ready_step,
