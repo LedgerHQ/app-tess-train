@@ -24,7 +24,7 @@ make prepare-data
 
 Now comes the painful step.
 
-For every text line `.tif` image in the ground truth directory (`data/nano-font-ocr-ground-truth`) the detected text in every corresponding `.gt.txt` needs to be **checked** and **manually fixed** so that the it is error free when launching the training process.
+For every text line `.tif` image in the ground truth directory (`data/nano-font-ocr-ground-truth`) the detected text in every corresponding `.gt.txt` needs to be **checked** and **manually fixed** so that it is error free when launching the training process.
 
 For instance, take this text line image (let's say it's called `data/nano-font-ocr-ground-truth/00006_processed-002.exp0.tif`)
 
